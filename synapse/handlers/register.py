@@ -126,6 +126,7 @@ class RegistrationHandler(BaseHandler):
         make_guest=False,
         admin=False,
         threepid=None,
+        displayname=None
     ):
         """Registers a new client on the server.
 
@@ -140,6 +141,8 @@ class RegistrationHandler(BaseHandler):
               since it offers no means of associating a device_id with the
               access_token. Instead you should call auth_handler.issue_access_token
               after registration.
+            displayname (string): Supply a display name to be set in the profile
+              for the new user.
         Returns:
             A tuple of (user_id, access_token).
         Raises:
@@ -169,6 +172,10 @@ class RegistrationHandler(BaseHandler):
             user = UserID(localpart, self.hs.hostname)
             user_id = user.to_string()
 
+            if displayname is None:
+                # If the user was a guest then they already have a profile
+                displayname = None if was_guest else user.localpart
+
             token = None
             if generate_token:
                 token = self.macaroon_gen.generate_access_token(user_id)
@@ -179,8 +186,7 @@ class RegistrationHandler(BaseHandler):
                 was_guest=was_guest,
                 make_guest=make_guest,
                 create_profile_with_localpart=(
-                    # If the user was a guest then they already have a profile
-                    None if was_guest else user.localpart
+                    displayname
                 ),
                 admin=admin,
             )
